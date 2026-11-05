@@ -104,25 +104,35 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFF040B16),
+      backgroundColor: const Color(0xFF06101E),
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        title: const Text(
+          'PUPR SUBANG',
+          style: TextStyle(
+            color: Color(0xFFF59E0B),
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: Stack(
         children: [
-          // Efek Cahaya Latar (Mesh Gradients)
+          // Efek Cahaya Latar (PUPR Gold & Deep Blue)
           Positioned(
             top: -100,
             left: -100,
             child: ScaleTransition(
               scale: _pulseAnimation,
-              child: _buildGlowBlob(const Color(0xFF00F2FE), 300),
+              child: _buildGlowBlob(const Color(0xFFF59E0B), 300),
             ),
           ),
           Positioned(
@@ -130,13 +140,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             right: -100,
             child: ScaleTransition(
               scale: _pulseAnimation,
-              child: _buildGlowBlob(const Color(0xFF4FACFE), 400),
+              child: _buildGlowBlob(const Color(0xFF0284C7), 400),
             ),
           ),
           Positioned(
             top: 250,
             right: -50,
-            child: _buildGlowBlob(const Color(0xFF8A2387), 250),
+            child: _buildGlowBlob(const Color(0xFF0D9488), 250),
           ),
 
           // Efek Kaca Buram Full Screen
@@ -442,14 +452,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: const LinearGradient(
-              colors: [Color(0xFF4FACFE), Color(0xFF00F2FE)],
+              colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
             boxShadow: [
               BoxShadow(
                 color: const Color(
-                  0xFF00F2FE,
+                  0xFFF59E0B,
                 ).withValues(alpha: 0.3 + (0.2 * (_pulseAnimation.value - 1))),
                 blurRadius: 20 + (10 * (_pulseAnimation.value - 1)),
                 offset: const Offset(0, 8),
@@ -536,10 +546,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       ? 'VERIFIKASI' 
                       : 'SIMPAN PASSWORD',
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 2.0,
+                color: Color(0xFF071224),
+                letterSpacing: 1.5,
               ),
             ),
           ),
@@ -569,14 +579,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isFocused
-              ? const Color(0xFF00F2FE)
+              ? const Color(0xFFF59E0B)
               : Colors.white.withValues(alpha: 0.1),
           width: isFocused ? 1.5 : 1.0,
         ),
         boxShadow: isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF00F2FE).withValues(alpha: 0.2),
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
                   blurRadius: 15,
                   spreadRadius: 1,
                 ),
@@ -598,7 +608,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           prefixIcon: Icon(
             icon,
             color: isFocused
-                ? const Color(0xFF00F2FE)
+                ? const Color(0xFFF59E0B)
                 : Colors.white.withValues(alpha: 0.7),
             size: 22,
           ),

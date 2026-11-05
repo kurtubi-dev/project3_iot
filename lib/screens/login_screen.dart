@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../mock_db.dart';
 import 'dashboard_screen.dart';
 import 'forgot_password_screen.dart';
+import 'splash_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _passwordFocus = FocusNode();
 
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   late AnimationController _fadeController;
   late AnimationController _pulseController;
@@ -35,22 +37,23 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
-    // Animasi Muncul (Fade In)
+
+    // Animasi Muncul Lembut (Fade In)
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1400),
     );
 
-    // Animasi Detak (Pulsing background & logo)
+    // Animasi Denyut Cahaya & Logo (Pulse)
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 2500),
     )..repeat(reverse: true);
 
-    // Animasi Melayang (Floating card)
+    // Animasi Melayang Halus (Floating)
     _floatController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(milliseconds: 3200),
     )..repeat(reverse: true);
 
     _fadeAnimation = CurvedAnimation(
@@ -58,17 +61,17 @@ class _LoginScreenState extends State<LoginScreen>
       curve: Curves.easeOutCubic,
     );
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+    _pulseAnimation = Tween<double>(begin: 0.96, end: 1.08).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    _floatAnimation = Tween<double>(begin: -10, end: 10).animate(
+    _floatAnimation = Tween<double>(begin: -6.0, end: 6.0).animate(
       CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
 
     _fadeController.forward();
 
-    // Rebuild saat input text difokuskan untuk efek menyala
+    // Rebuild saat input text difokuskan untuk efek glowing border
     _emailFocus.addListener(() => setState(() {}));
     _passwordFocus.addListener(() => setState(() {}));
   }
@@ -85,6 +88,125 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  Future<void> _handleLogin() async {
+    setState(() => _isLoading = true);
+
+    String savedEmail = await MockDB.getEmail();
+    String savedPassword = await MockDB.getPassword();
+
+    await Future.delayed(const Duration(milliseconds: 400)); // Smooth feedback
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    final inputEmail = _emailController.text.trim();
+    final inputPassword = _passwordController.text;
+
+    final isEmailValid = MockDB.isEmailValid(inputEmail, savedEmail);
+    final isPasswordValid = MockDB.isPasswordValid(inputPassword, savedPassword);
+
+    if (isEmailValid && isPasswordValid) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      );
+    } else {
+      _showErrorDialog();
+    }
+  }
+
+  void _showErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28.0),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0B192C),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.6),
+                blurRadius: 30,
+                spreadRadius: 5,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+                  border: Border.all(
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.5),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.shield_outlined,
+                  color: Color(0xFFEF4444),
+                  size: 40,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Autentikasi Gagal',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Email petugas atau kata sandi tidak valid.\nPastikan Anda menggunakan akun petugas SDA Subang yang terdaftar.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 13.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF59E0B),
+                    foregroundColor: const Color(0xFF071224),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Periksa Kembali',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
@@ -95,349 +217,456 @@ class _LoginScreenState extends State<LoginScreen>
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFF040B16),
+      backgroundColor: const Color(0xFF06101E), // Deep Executive Navy
       body: Stack(
         children: [
-          // Efek Cahaya Latar (Mesh Gradients)
+          // 1. Lapisan Cahaya Latar (PUPR Signature Amber & Deep Blue Glow)
           Positioned(
-            top: -100,
-            left: -100,
+            top: -90,
+            left: -80,
             child: ScaleTransition(
               scale: _pulseAnimation,
-              child: _buildGlowBlob(const Color(0xFF00F2FE), 300),
+              child: _buildGlowBlob(
+                const Color(0xFFF59E0B), // Kuning Keemasan Khas PUPR
+                320,
+                alpha: 0.28,
+              ),
             ),
           ),
           Positioned(
-            bottom: -150,
-            right: -100,
+            bottom: -120,
+            right: -80,
             child: ScaleTransition(
               scale: _pulseAnimation,
-              child: _buildGlowBlob(const Color(0xFF4FACFE), 400),
+              child: _buildGlowBlob(
+                const Color(0xFF0284C7), // Biru Rekayasa / IoT Azure
+                360,
+                alpha: 0.25,
+              ),
             ),
           ),
           Positioned(
-            top: 250,
-            right: -50,
-            child: _buildGlowBlob(const Color(0xFF8A2387), 250),
+            top: 280,
+            right: -60,
+            child: _buildGlowBlob(
+              const Color(0xFF0D9488), // Teal Telemetri
+              240,
+              alpha: 0.20,
+            ),
           ),
 
-          // Efek Kaca Buram Full Screen
+          // 2. Efek Kaca Buram Menyeluruh
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+              filter: ImageFilter.blur(sigmaX: 90, sigmaY: 90),
               child: const SizedBox(),
             ),
           ),
 
-          // Konten Utama
+          // 3. Ornamen Garis Grid Halus bernuansa Teknis / Rekayasa PUPR
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _TechGridPainter(),
+            ),
+          ),
+
+          // 4. Konten Utama
           SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: AnimatedBuilder(
-                    animation: _floatAnimation,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(0, _floatAnimation.value),
-                        child: child,
-                      );
-                    },
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(30),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                        child: Container(
-                          padding: const EdgeInsets.all(32),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              width: 1.5,
+            child: Stack(
+              children: [
+                Center(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 20.0,
+                    ),
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 24),
+                          // Header Identitas Dinas PUPR Subang
+                          _buildHeaderBranding(),
+                          const SizedBox(height: 26),
+
+                          // Kartu Glassmorphism Login
+                          AnimatedBuilder(
+                            animation: _floatAnimation,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(0, _floatAnimation.value),
+                                child: child,
+                              );
+                            },
+                            child: _buildLoginCard(),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Footer Dinas PUPR Kabupaten Subang
+                          _buildFooter(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Tombol Kembali (Z-Index paling atas agar selalu responsif)
+                Positioned(
+                  top: 10,
+                  left: 16,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SplashScreen(),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 30,
-                                spreadRadius: 5,
-                              ),
-                            ],
+                          );
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(30),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            width: 1,
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Ikon Logo Berdenyut
-                              AnimatedBuilder(
-                                animation: _pulseAnimation,
-                                builder: (context, child) {
-                                  return Container(
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.white.withValues(
-                                        alpha: 0.05,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFF00F2FE)
-                                              .withValues(
-                                                alpha:
-                                                    0.3 *
-                                                    (_pulseAnimation.value -
-                                                        0.9),
-                                              ),
-                                          blurRadius: 30,
-                                          spreadRadius: 10,
-                                        ),
-                                      ],
-                                      border: Border.all(
-                                        color: const Color(0xFF00F2FE)
-                                            .withValues(alpha: 0.5),
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: const Icon(
-                                      Icons.settings_input_antenna,
-                                      size: 60,
-                                      color: Colors.white,
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 24),
-
-                              // Teks Sambutan
-                              const Text(
-                                'Hub Pintar',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Selamat Datang Di Aplikasi Smart IoT',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                  letterSpacing: 1.2,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              const SizedBox(height: 40),
-
-                              // Input Email
-                              _buildTextField(
-                                controller: _emailController,
-                                focusNode: _emailFocus,
-                                icon: Icons.alternate_email,
-                                hintText: 'Alamat Email',
-                                keyboardType: TextInputType.emailAddress,
-                              ),
-                              const SizedBox(height: 16),
-
-                              // Input Password
-                              _buildTextField(
-                                controller: _passwordController,
-                                focusNode: _passwordFocus,
-                                icon: Icons.lock_outline,
-                                hintText: 'Kata Sandi',
-                                obscureText: !_isPasswordVisible,
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _isPasswordVisible
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
-                                    color: Colors.white.withValues(alpha: 0.7),
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isPasswordVisible = !_isPasswordVisible;
-                                    });
-                                  },
-                                ),
-                              ),
-
-                              // Lupa Password
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const ForgotPasswordScreen(),
-                                      ),
-                                    );
-                                  },
-                                  style: TextButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'Lupa Kata Sandi?',
-                                    style: TextStyle(
-                                      color: const Color(0xFF00F2FE)
-                                          .withValues(alpha: 0.9),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-
-                              // Tombol Masuk Animasi
-                              _buildAnimatedButton(),
-
-                            ],
-                          ),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: Colors.white,
+                          size: 19,
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
-        ],
-      ),
-    );
+    ],
+  ),
+);
   }
 
-  // Widget Bola Cahaya
-  Widget _buildGlowBlob(Color color, double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color.withValues(alpha: 0.4),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.4),
-            blurRadius: 100,
-            spreadRadius: 50,
+  // Header Identitas Resmi PUPR Kab. Subang
+  Widget _buildHeaderBranding() {
+    return Column(
+      children: [
+        // Logo Shield Berdenyut (Logo Resmi PUPR)
+        AnimatedBuilder(
+          animation: _pulseAnimation,
+          builder: (context, child) {
+            return Container(
+              width: 90,
+              height: 90,
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                border: Border.all(
+                  color: const Color(0xFFF59E0B).withValues(
+                    alpha: 0.7 + (0.3 * (_pulseAnimation.value - 0.96)),
+                  ),
+                  width: 3.0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFF59E0B).withValues(
+                      alpha: 0.4 * _pulseAnimation.value,
+                    ),
+                    blurRadius: 28 * _pulseAnimation.value,
+                    spreadRadius: 3,
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                    blurRadius: 20,
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Image.asset(
+                        'assets/images/logo_pupr.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981), // Indikator Online Hijau
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+
+        // Judul Aplikasi PUPR
+        const Text(
+          'PUPR SUBANG',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 27,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: 2.2,
           ),
-        ],
+        ),
+        const SizedBox(height: 4),
+
+        // Sub-judul Sistem IoT
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 24,
+              height: 2,
+              color: const Color(0xFFF59E0B),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'SMART IOT MONITORING',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF38BDF8),
+                letterSpacing: 2.0,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 24,
+              height: 2,
+              color: const Color(0xFFF59E0B),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Sistem Pemantauan Infrastruktur & Telemetri Terintegrasi',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white.withValues(alpha: 0.65),
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Kartu Utama Formulir Login
+  Widget _buildLoginCard() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 30),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F1E36).withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.15),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 35,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header dalam kartu
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.lock_person_rounded,
+                      color: Color(0xFFF59E0B),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Portal Petugas SDA',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        'Silakan masuk dengan akun petugas',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.55),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 26),
+
+              // Input Email Petugas
+              _buildFieldLabel('Email / Akun Petugas SDA'),
+              const SizedBox(height: 8),
+              _buildTextField(
+                controller: _emailController,
+                focusNode: _emailFocus,
+                icon: Icons.badge_outlined,
+                hintText: 'petugas.sda@subang.go.id',
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 20),
+
+              // Input Kata Sandi
+              _buildFieldLabel('Kata Sandi Akun'),
+              const SizedBox(height: 8),
+              _buildTextField(
+                controller: _passwordController,
+                focusNode: _passwordFocus,
+                icon: Icons.key_rounded,
+                hintText: '••••••••',
+                obscureText: !_isPasswordVisible,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isPasswordVisible
+                        ? Icons.visibility_rounded
+                        : Icons.visibility_off_rounded,
+                    color: Colors.white.withValues(alpha: 0.65),
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  },
+                ),
+              ),
+
+              // Lupa Kata Sandi Link
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 10,
+                    ),
+                  ),
+                  child: const Text(
+                    'Lupa Kata Sandi?',
+                    style: TextStyle(
+                      color: Color(0xFFF59E0B),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Tombol Masuk Sistem
+              _buildSubmitButton(),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  // Widget Tombol Utama dengan Efek Berdenyut
-  Widget _buildAnimatedButton() {
+  Widget _buildFieldLabel(String label) {
+    return Text(
+      label,
+      style: TextStyle(
+        color: Colors.white.withValues(alpha: 0.85),
+        fontSize: 12.5,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.3,
+      ),
+    );
+  }
+
+  // Tombol Aksi Masuk
+  Widget _buildSubmitButton() {
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
         return Container(
           width: double.infinity,
-          height: 56,
+          height: 52,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: const LinearGradient(
-              colors: [Color(0xFF4FACFE), Color(0xFF00F2FE)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
+              colors: [
+                Color(0xFFF59E0B), // PUPR Gold
+                Color(0xFFD97706), // Amber Dalam
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(
-                  0xFF00F2FE,
-                ).withValues(alpha: 0.3 + (0.2 * (_pulseAnimation.value - 1))),
-                blurRadius: 20 + (10 * (_pulseAnimation.value - 1)),
-                offset: const Offset(0, 8),
+                color: const Color(0xFFF59E0B).withValues(
+                  alpha: 0.35 + (0.15 * (_pulseAnimation.value - 0.96)),
+                ),
+                blurRadius: 18 + (6 * (_pulseAnimation.value - 0.96)),
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: ElevatedButton(
-            onPressed: () async {
-              String savedEmail = await MockDB.getEmail();
-              String savedPassword = await MockDB.getPassword();
-              
-              if (!context.mounted) return;
-
-              if (_emailController.text == savedEmail &&
-                  _passwordController.text == savedPassword) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const DashboardScreen(),
-                  ),
-                );
-              } else {
-                showDialog(
-                  context: context,
-                  builder: (context) => Dialog(
-                    backgroundColor: const Color(0xFF1E232C),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 32.0,
-                        horizontal: 24.0,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'EMAIL ATAU PASSWORD\nSALAH',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          const Text(
-                            'Periksa kembali email atau password\nkamu.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(0),
-                                ),
-                              ),
-                              child: const Text(
-                                'Kembali',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }
-            },
+            onPressed: _isLoading ? null : _handleLogin,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
@@ -445,22 +674,100 @@ class _LoginScreenState extends State<LoginScreen>
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: const Text(
-              'MASUK',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 2.0,
-              ),
-            ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0xFF071224),
+                      ),
+                    ),
+                  )
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'MASUK KE SISTEM',
+                        style: TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF071224), // Teks Kontras Tinggi
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 19,
+                        color: Color(0xFF071224),
+                      ),
+                    ],
+                  ),
           ),
         );
       },
     );
   }
 
-  // Widget TextField dengan Efek Glowing saat Fokus
+  // Footer dengan Slogan & Keterangan Dinas PUPR
+  Widget _buildFooter() {
+    return Column(
+      children: [
+        Text(
+          'Dinas Pekerjaan Umum dan Penataan Ruang',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Subang Jawara',
+              style: TextStyle(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.9),
+                fontSize: 11.5,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              ' • Sigap Membangun Negeri • v1.2',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.45),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Widget Bola Cahaya Glow
+  Widget _buildGlowBlob(Color color, double size, {double alpha = 0.3}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color.withValues(alpha: alpha),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: alpha),
+            blurRadius: 100,
+            spreadRadius: 40,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget Custom TextField
   Widget _buildTextField({
     required TextEditingController controller,
     required FocusNode focusNode,
@@ -473,23 +780,23 @@ class _LoginScreenState extends State<LoginScreen>
     final isFocused = focusNode.hasFocus;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 250),
       decoration: BoxDecoration(
         color: isFocused
-            ? Colors.white.withValues(alpha: 0.1)
-            : Colors.black.withValues(alpha: 0.2),
+            ? const Color(0xFF0F2648).withValues(alpha: 0.7)
+            : const Color(0xFF081426).withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isFocused
-              ? const Color(0xFF00F2FE)
-              : Colors.white.withValues(alpha: 0.1),
-          width: isFocused ? 1.5 : 1.0,
+              ? const Color(0xFFF59E0B) // Glow Gold PUPR saat aktif
+              : Colors.white.withValues(alpha: 0.12),
+          width: isFocused ? 1.6 : 1.0,
         ),
         boxShadow: isFocused
             ? [
                 BoxShadow(
-                  color: const Color(0xFF00F2FE).withValues(alpha: 0.2),
-                  blurRadius: 15,
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.25),
+                  blurRadius: 14,
                   spreadRadius: 1,
                 ),
               ]
@@ -500,28 +807,54 @@ class _LoginScreenState extends State<LoginScreen>
         focusNode: focusNode,
         obscureText: obscureText,
         keyboardType: keyboardType,
-        style: const TextStyle(color: Colors.white, fontSize: 16),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14.5,
+          fontWeight: FontWeight.w500,
+        ),
         decoration: InputDecoration(
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 18,
+            horizontal: 16,
+            vertical: 16,
           ),
           prefixIcon: Icon(
             icon,
             color: isFocused
-                ? const Color(0xFF00F2FE)
-                : Colors.white.withValues(alpha: 0.7),
-            size: 22,
+                ? const Color(0xFFF59E0B)
+                : Colors.white.withValues(alpha: 0.55),
+            size: 21,
           ),
           suffixIcon: suffixIcon,
           hintText: hintText,
           hintStyle: TextStyle(
-            color: Colors.white.withValues(alpha: 0.4),
-            fontSize: 15,
+            color: Colors.white.withValues(alpha: 0.35),
+            fontSize: 14,
           ),
         ),
       ),
     );
   }
+}
+
+// Background Painter: Garis Grid Teknis / Cetak Biru Rekayasa PUPR
+class _TechGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.025)
+      ..strokeWidth = 1.0;
+
+    const double step = 36.0;
+
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
