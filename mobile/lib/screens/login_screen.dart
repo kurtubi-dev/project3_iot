@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../mock_db.dart';
+import '../services/api_service.dart';
 import 'dashboard_screen.dart';
 import 'forgot_password_screen.dart';
 import 'splash_screen.dart';
@@ -89,33 +89,32 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _handleLogin() async {
+    final inputEmail = _emailController.text.trim();
+    final inputPassword = _passwordController.text;
+
+    if (inputEmail.isEmpty || inputPassword.isEmpty) {
+      _showErrorDialog(message: 'Harap masukkan email dan kata sandi kedinasan Anda.');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
-    String savedEmail = await MockDB.getEmail();
-    String savedPassword = await MockDB.getPassword();
-
-    await Future.delayed(const Duration(milliseconds: 400)); // Smooth feedback
+    final result = await ApiService.login(inputEmail, inputPassword);
 
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    final inputEmail = _emailController.text.trim();
-    final inputPassword = _passwordController.text;
-
-    final isEmailValid = MockDB.isEmailValid(inputEmail, savedEmail);
-    final isPasswordValid = MockDB.isPasswordValid(inputPassword, savedPassword);
-
-    if (isEmailValid && isPasswordValid) {
+    if (result['success'] == true) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const DashboardScreen()),
       );
     } else {
-      _showErrorDialog();
+      _showErrorDialog(message: result['message'] as String?);
     }
   }
 
-  void _showErrorDialog() {
+  void _showErrorDialog({String? message}) {
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -168,7 +167,8 @@ class _LoginScreenState extends State<LoginScreen>
               ),
               const SizedBox(height: 10),
               Text(
-                'Email petugas atau kata sandi tidak valid.\nPastikan Anda menggunakan akun petugas SDA Subang yang terdaftar.',
+                message ??
+                    'Email petugas atau kata sandi tidak valid.\nPastikan Anda menggunakan akun petugas SDA Subang yang terdaftar.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.7),
