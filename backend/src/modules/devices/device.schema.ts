@@ -29,9 +29,17 @@ export const updateDeviceSchema = z.object({
   location: z.string().min(1).max(255).optional(),
 });
 
-export const updateDeviceStatusSchema = z.object({
-  isActive: z.boolean(),
-});
+export const updateDeviceStatusSchema = z
+  .object({
+    isActive: z.boolean().optional(),
+    status: z.string().optional(),
+  })
+  .refine((data) => data.isActive !== undefined || data.status !== undefined, {
+    message: 'Harus menyertakan "isActive" (boolean) atau "status" (string)',
+  })
+  .transform((data) => ({
+    isActive: data.isActive !== undefined ? data.isActive : data.status === 'ACTIVE',
+  }));
 
 export type ListDevicesQuery = z.infer<typeof listDevicesQuerySchema>;
 export type CreateDeviceInput = z.infer<typeof createDeviceSchema>;

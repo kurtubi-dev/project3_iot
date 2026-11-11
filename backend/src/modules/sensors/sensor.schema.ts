@@ -32,9 +32,17 @@ export const updateSensorSchema = z.object({
   unit: z.string().min(1).max(30).optional(),
 });
 
-export const updateSensorStatusSchema = z.object({
-  isActive: z.boolean(),
-});
+export const updateSensorStatusSchema = z
+  .object({
+    isActive: z.boolean().optional(),
+    status: z.string().optional(),
+  })
+  .refine((data) => data.isActive !== undefined || data.status !== undefined, {
+    message: 'Harus menyertakan "isActive" (boolean) atau "status" (string)',
+  })
+  .transform((data) => ({
+    isActive: data.isActive !== undefined ? data.isActive : data.status === 'ACTIVE',
+  }));
 
 export type ListSensorsQuery = z.infer<typeof listSensorsQuerySchema>;
 export type CreateSensorInput = z.infer<typeof createSensorSchema>;
