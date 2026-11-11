@@ -13,24 +13,55 @@ export const listSensorsQuerySchema = z.object({
   search: z.string().optional(),
 });
 
-export const createSensorSchema = z.object({
-  deviceId: z.string().uuid('ID perangkat harus berupa UUID yang valid'),
-  sensorCode: z
-    .string()
-    .min(3, 'Kode sensor minimal 3 karakter')
-    .max(50, 'Kode sensor maksimal 50 karakter')
-    .regex(/^[A-Z0-9_-]+$/i, 'Kode sensor hanya boleh huruf, angka, strip, dan underscore'),
-  name: z.string().min(1, 'Nama sensor wajib diisi').max(150),
-  type: z.nativeEnum(SensorType),
-  parameter: z.string().min(1, 'Parameter sensor wajib diisi').max(100),
-  unit: z.string().min(1, 'Unit pengukuran wajib diisi').max(30),
-});
+export const createSensorSchema = z
+  .object({
+    deviceId: z.string().uuid('ID perangkat harus berupa UUID yang valid'),
+    sensorCode: z
+      .string()
+      .min(3, 'Kode sensor minimal 3 karakter')
+      .max(50, 'Kode sensor maksimal 50 karakter')
+      .regex(/^[A-Z0-9_-]+$/i, 'Kode sensor hanya boleh huruf, angka, strip, dan underscore'),
+    name: z.string().optional(),
+    type: z.nativeEnum(SensorType).optional(),
+    sensorType: z.nativeEnum(SensorType).optional(),
+    parameter: z.string().optional(),
+    unit: z.string().min(1, 'Unit pengukuran wajib diisi').max(30).default('cm'),
+    minThreshold: z.number().optional(),
+    maxThreshold: z.number().optional(),
+    model: z.string().optional(),
+  })
+  .transform((data) => {
+    const type = data.type || data.sensorType || SensorType.WATER_LEVEL;
+    const name =
+      data.name ||
+      (data.model ? `Sensor ${data.model}` : `Sensor ${type === SensorType.WATER_LEVEL ? 'Ketinggian Air' : 'Curah Hujan'}`);
+    const parameter =
+      data.parameter || (type === SensorType.WATER_LEVEL ? 'water_level_cm' : 'rainfall_mm');
 
-export const updateSensorSchema = z.object({
-  name: z.string().min(1).max(150).optional(),
-  parameter: z.string().min(1).max(100).optional(),
-  unit: z.string().min(1).max(30).optional(),
-});
+    return {
+      deviceId: data.deviceId,
+      sensorCode: data.sensorCode,
+      name,
+      type,
+      parameter,
+      unit: data.unit,
+    };
+  });
+
+export const updateSensorSchema = z
+  .object({
+    name: z.string().min(1).max(150).optional(),
+    parameter: z.string().min(1).max(100).optional(),
+    unit: z.string().min(1).max(30).optional(),
+    minThreshold: z.number().optional(),
+    maxThreshold: z.number().optional(),
+    notes: z.string().optional(),
+  })
+  .transform((data) => ({
+    name: data.name,
+    parameter: data.parameter,
+    unit: data.unit,
+  }));
 
 export const updateSensorStatusSchema = z
   .object({
