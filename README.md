@@ -1,17 +1,27 @@
-# mobile_iot
+# Main Backend Documentation Pack
 
-A new Flutter project.
+Dokumentasi acuan untuk AI coding agent dan pengembang Main Backend.
 
-## Getting Started
+## Isi
+- `docs/PRD.md` — kebutuhan produk dan ruang lingkup.
+- `docs/DATABASE_SCHEMA.md` — rancangan 18 tabel, kolom, constraint, dan index.
+- `docs/DATABASE_RELATIONS.md` — relasi dan ERD Mermaid.
+- `docs/BUSINESS_RULES.md` — aturan operasional dan status.
+- `docs/API_SPECIFICATION.md` — rancangan endpoint REST.
+- `docs/MQTT_AI_INTEGRATION.md` — integrasi MQTT dan AI Service.
 
-This project is a starting point for a Flutter application.
+## Cara menggunakan dengan AI coding agent
+1. Berikan seluruh folder `docs/` sebagai konteks proyek.
+2. Minta agent membaca semua dokumen sebelum mengubah kode.
+3. Minta agent mengidentifikasi konflik/ketidakjelasan terlebih dahulu.
+4. Jangan izinkan agent mengubah keputusan berstatus DISEPAKATI tanpa konfirmasi.
+5. Untuk hal PERLU DIKONFIRMASI, agent harus menandai asumsi dan bertanya sebelum mengunci implementasi.
+6. Buat `schema.prisma` dari `DATABASE_SCHEMA.md` dan `DATABASE_RELATIONS.md`.
+7. Jalankan validasi Prisma dan review custom SQL migration sebelum migrasi database.
 
-A few resources to get you started if this is your first Flutter project:
+## Prompt awal untuk AI coding agent
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Baca seluruh dokumentasi di folder `docs/` terlebih dahulu. Kamu bertugas mengembangkan Main Backend sesuai dokumen. Pertahankan semua keputusan yang telah disepakati. Jangan mengarang business rule, field, endpoint, atau integrasi yang belum ditentukan. Laporkan konflik dan hal yang belum jelas sebelum implementasi. Gunakan TypeScript strict, Express.js, Prisma, PostgreSQL, Zod, dan struktur Modular Monolith. Jangan membuat frontend, firmware ESP32, atau model AI dalam repository Main Backend. Untuk tahap pertama, review dokumen dan usulkan struktur project serta daftar keputusan yang masih perlu dikonfirmasi. Jangan langsung membuat seluruh aplikasi sekaligus.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Catatan status
+Dokumen ini adalah draft teknis awal. Contoh payload dan beberapa kebijakan integrasi masih ilustratif. Database schema harus direview sebelum migration final.
