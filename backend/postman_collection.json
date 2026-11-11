@@ -1,0 +1,646 @@
+{
+	"info": {
+		"_postman_id": "9a7d32c5-7f28-48b2-b1e0-8353cfc90001",
+		"name": "IoT Smart Irrigation Backend API",
+		"description": "Postman Collection untuk pengujian endpoint backend IoT Smart Irrigation System (Tugas Milestone Backend).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "01. System Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "02. Authentication",
+			"item": [
+				{
+					"name": "Login (Admin Success)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set('token', jsonData.data.accessToken);",
+									"    pm.collectionVariables.set('refreshToken', jsonData.data.refreshToken);",
+									"    console.log('Token updated successfully');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@irrigation.local\",\n  \"password\": \"AdminPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login (Invalid Password - Negative Test)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@irrigation.local\",\n  \"password\": \"SalahPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set('token', jsonData.data.accessToken);",
+									"    pm.collectionVariables.set('refreshToken', jsonData.data.refreshToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/refresh",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "auth", "refresh"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "03. Device Management (CRUD)",
+			"item": [
+				{
+					"name": "Register Device (Create)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set('deviceId', jsonData.data.id);",
+									"    console.log('Saved deviceId: ' + jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"deviceCode\": \"DEV-ESP32-POSTMAN-01\",\n  \"name\": \"Node Telemetri Blok Sawah A\",\n  \"deviceType\": \"ESP32\",\n  \"firmwareVersion\": \"v1.0.0\",\n  \"location\": \"Petak Sawah Utama Zona 1\",\n  \"latitude\": -7.7956,\n  \"longitude\": 110.3695\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/devices",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "devices"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Devices (Read List)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/devices?page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "devices"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Device By ID (Read Detail)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/devices/{{deviceId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "devices", "{{deviceId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Device Info (Update)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Node Telemetri Blok Sawah A (Revisi)\",\n  \"location\": \"Petak Sawah Utama Zona 1 - Dekat Saluran Sekunder\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/devices/{{deviceId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "devices", "{{deviceId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Toggle Device Status (Activate / Deactivate)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"MAINTENANCE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/devices/{{deviceId}}/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "devices", "{{deviceId}}", "status"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Rotate Device Credential",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/devices/{{deviceId}}/credentials/rotate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "devices", "{{deviceId}}", "credentials", "rotate"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "04. Sensor Management (CRUD)",
+			"item": [
+				{
+					"name": "Register Sensor (Create)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set('sensorId', jsonData.data.id);",
+									"    console.log('Saved sensorId: ' + jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"sensorCode\": \"SNS-WL-001\",\n  \"sensorType\": \"WATER_LEVEL\",\n  \"unit\": \"cm\",\n  \"minThreshold\": 5.0,\n  \"maxThreshold\": 30.0,\n  \"model\": \"HC-SR04 Waterproof Ultrasonic\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/sensors",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "sensors"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Sensors (Read List)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/sensors?page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "sensors"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Sensor By ID (Read Detail)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/sensors/{{sensorId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "sensors", "{{sensorId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Sensor Thresholds (Update)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"minThreshold\": 7.0,\n  \"maxThreshold\": 35.0,\n  \"notes\": \"Dikalibrasi untuk musim tanam padi tahap 2\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/sensors/{{sensorId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "sensors", "{{sensorId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Toggle Sensor Status (Activate / Deactivate)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"INACTIVE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/sensors/{{sensorId}}/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "sensors", "{{sensorId}}", "status"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "05. Gate Management (CRUD)",
+			"item": [
+				{
+					"name": "Register Gate (Create)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data) {",
+									"    pm.collectionVariables.set('gateId', jsonData.data.id);",
+									"    console.log('Saved gateId: ' + jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"gateCode\": \"GATE-SEKUNDER-01\",\n  \"name\": \"Pintu Air Sekunder Petak 1\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"location\": \"Saluran Masuk Irigasi Blok A\",\n  \"maxOpening\": 100.0,\n  \"currentOpening\": 0.0,\n  \"motorType\": \"LINEAR_ACTUATOR_12V\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/gates",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "gates"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Gates (Read List)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/gates?page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "gates"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Gate By ID (Read Detail)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/gates/{{gateId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "gates", "{{gateId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Gate Operational Status & Opening (Manual Control)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"MANUAL\",\n  \"actualOpening\": 45.0\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/gates/{{gateId}}/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "gates", "{{gateId}}", "status"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "06. User Management",
+			"item": [
+				{
+					"name": "Get All Users (Admin Only)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users?page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "users"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create User Invitation (Admin Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"operator1@irrigation.local\",\n  \"role\": \"OPERATOR\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/invitations",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "users", "invitations"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "deviceId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "sensorId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "gateId",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+
