@@ -138,8 +138,9 @@
 								"exec": [
 									"var jsonData = pm.response.json();",
 									"if (jsonData.success && jsonData.data) {",
-									"    pm.collectionVariables.set('deviceId', jsonData.data.id);",
-									"    console.log('Saved deviceId: ' + jsonData.data.id);",
+									"    var devId = jsonData.data.device ? jsonData.data.device.id : jsonData.data.id;",
+									"    pm.collectionVariables.set('deviceId', devId);",
+									"    console.log('Saved deviceId: ' + devId);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -160,7 +161,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"deviceCode\": \"DEV-ESP32-POSTMAN-01\",\n  \"name\": \"Node Telemetri Blok Sawah A\",\n  \"deviceType\": \"ESP32\",\n  \"firmwareVersion\": \"v1.0.0\",\n  \"location\": \"Petak Sawah Utama Zona 1\",\n  \"latitude\": -7.7956,\n  \"longitude\": 110.3695\n}"
+							"raw": "{\n  \"deviceCode\": \"DEV-ESP32-POSTMAN-01\",\n  \"name\": \"Node Telemetri Blok Sawah A\",\n  \"location\": \"Petak Sawah Utama Zona 1\",\n  \"description\": \"Node telemetri pengukur level air dan kontrol pintu irigasi\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/devices",
@@ -322,7 +323,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"sensorCode\": \"SNS-WL-001\",\n  \"sensorType\": \"WATER_LEVEL\",\n  \"unit\": \"cm\",\n  \"minThreshold\": 5.0,\n  \"maxThreshold\": 30.0,\n  \"model\": \"HC-SR04 Waterproof Ultrasonic\"\n}"
+							"raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"sensorCode\": \"SNS-WL-001\",\n  \"name\": \"Sensor Ketinggian Air Saluran\",\n  \"type\": \"WATER_LEVEL\",\n  \"parameter\": \"water_level_cm\",\n  \"unit\": \"cm\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/sensors",
@@ -394,7 +395,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"minThreshold\": 7.0,\n  \"maxThreshold\": 35.0,\n  \"notes\": \"Dikalibrasi untuk musim tanam padi tahap 2\"\n}"
+							"raw": "{\n  \"name\": \"Sensor Ketinggian Air Saluran (Revisi Kalibrasi)\",\n  \"parameter\": \"water_level_cm\",\n  \"unit\": \"cm\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/sensors/{{sensorId}}",
@@ -466,7 +467,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"gateCode\": \"GATE-SEKUNDER-01\",\n  \"name\": \"Pintu Air Sekunder Petak 1\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"location\": \"Saluran Masuk Irigasi Blok A\",\n  \"maxOpening\": 100.0,\n  \"currentOpening\": 0.0,\n  \"motorType\": \"LINEAR_ACTUATOR_12V\"\n}"
+							"raw": "{\n  \"gateCode\": \"GATE-SEKUNDER-01\",\n  \"name\": \"Pintu Air Sekunder Petak 1\",\n  \"deviceId\": \"{{deviceId}}\",\n  \"location\": \"Saluran Masuk Irigasi Blok A\",\n  \"actualOpening\": 0.0,\n  \"operationalStatus\": \"NORMAL\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/gates",
@@ -538,7 +539,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"status\": \"MANUAL\",\n  \"actualOpening\": 45.0\n}"
+							"raw": "{\n  \"operationalStatus\": \"MOVING\",\n  \"actualOpening\": 45.0\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/gates/{{gateId}}/status",
