@@ -26,6 +26,14 @@ export const createApp = (): Express => {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 
+  // Sanitize accidental quotes from request URL (e.g. copied from JSON with quotes)
+  app.use((req, _res, next) => {
+    if (req.url && (req.url.includes('"') || req.url.includes('%22') || req.url.includes("'") || req.url.includes('%27'))) {
+      req.url = req.url.replace(/["']|%22|%27/g, '');
+    }
+    next();
+  });
+
   // 2. Request Logging (skip for test/healthcheck)
   if (env.NODE_ENV !== 'test') {
     app.use(
