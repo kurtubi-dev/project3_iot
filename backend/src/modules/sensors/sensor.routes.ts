@@ -36,6 +36,12 @@ sensorRouter.patch(
   validateBody(updateSensorSchema),
   sensorController.updateSensor
 );
+sensorRouter.put(
+  '/:id',
+  requireRoles(UserRole.ADMIN),
+  validateBody(updateSensorSchema),
+  sensorController.updateSensor
+);
 sensorRouter.patch(
   '/:id/status',
   requireRoles(UserRole.ADMIN),

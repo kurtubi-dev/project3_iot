@@ -36,6 +36,12 @@ deviceRouter.patch(
   validateBody(updateDeviceSchema),
   deviceController.updateDevice
 );
+deviceRouter.put(
+  '/:id',
+  requireRoles(UserRole.ADMIN),
+  validateBody(updateDeviceSchema),
+  deviceController.updateDevice
+);
 deviceRouter.patch(
   '/:id/status',
   requireRoles(UserRole.ADMIN),

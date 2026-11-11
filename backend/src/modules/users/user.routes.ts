@@ -23,5 +23,6 @@ userRouter.get('/', validateQuery(listUsersQuerySchema), userController.listUser
 userRouter.post('/invitations', validateBody(inviteUserSchema), userController.inviteUser);
 userRouter.get('/:id', userController.getUserById);
 userRouter.patch('/:id', validateBody(updateUserSchema), userController.updateUser);
+userRouter.put('/:id', validateBody(updateUserSchema), userController.updateUser);
 userRouter.patch('/:id/status', validateBody(updateUserStatusSchema), userController.updateUserStatus);
 

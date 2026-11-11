@@ -36,6 +36,12 @@ gateRouter.patch(
   validateBody(updateGateSchema),
   gateController.updateGate
 );
+gateRouter.put(
+  '/:id',
+  requireRoles(UserRole.ADMIN),
+  validateBody(updateGateSchema),
+  gateController.updateGate
+);
 
 // Operational status update (ADMIN, PETUGAS_LAPANGAN)
 gateRouter.patch(
