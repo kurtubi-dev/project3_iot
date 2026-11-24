@@ -1,171 +1,75 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../mock_db.dart';
 
 class ApiService {
-  static const String _tokenKey = 'auth_sanctum_token';
-  static const String _userKey = 'auth_user_data';
+  static const String _accessTokenKey = 'siaga_access_token';
+  static const String _refreshTokenKey = 'siaga_refresh_token';
 
-  /// Mendapatkan Base URL sesuai platform target (Web/Desktop/Android Emulator/HP)
   static String get baseUrl {
     if (kIsWeb) {
-      return 'http://127.0.0.1:8000/api';
+      return 'http://127.0.0.1:3000/api/v1';
     }
     if (defaultTargetPlatform == TargetPlatform.android) {
-      // 10.0.2.2 adalah alias localhost host machine untuk emulator Android
-      return 'http://10.0.2.2:8000/api';
+      return 'http://10.0.2.2:3000/api/v1';
     }
-    return 'http://127.0.0.1:8000/api';
+    return 'http://127.0.0.1:3000/api/v1';
   }
 
-  /// Autentikasi Login terintegrasi ke Laravel Sanctum dengan fallback offline
-  static Future<Map<String, dynamic>> login(String email, String password) async {
-    final cleanEmail = email.trim();
-    final cleanPassword = password.trim();
+  static Future<String?> getAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_accessTokenKey);
+  }
 
-    try {
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/login'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'email': cleanEmail,
-              'password': cleanPassword,
-            }),
-          )
-          .timeout(const Duration(seconds: 4));
+  static Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_accessTokenKey, accessToken);
+    await prefs.setString(_refreshTokenKey, refreshToken);
+  }
 
-      final data = jsonDecode(response.body);
+  static Future<void> clearTokens() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_accessTokenKey);
+    await prefs.remove(_refreshTokenKey);
+  }
 
-      if (response.statusCode == 200 && data['success'] == true) {
-        final prefs = await SharedPreferences.getInstance();
-        if (data['token'] != null) {
-          await prefs.setString(_tokenKey, data['token']);
-        }
-        if (data['user'] != null) {
-          await prefs.setString(_userKey, jsonEncode(data['user']));
-        }
-        return {
-          'success': true,
-          'message': data['message'] ?? 'Login berhasil.',
-          'user': data['user'],
-          'is_online': true,
-        };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Kredensial tidak valid.',
-          'is_online': true,
-        };
-      }
-    } catch (e) {
-      debugPrint('Koneksi ke backend Laravel gagal ($e), beralih ke validasi lokal...');
-      // Fallback mulus ke MockDB lokal jika backend Laravel sedang tidak aktif
-      final savedEmail = await MockDB.getEmail();
-      final savedPassword = await MockDB.getPassword();
-
-      final isEmailOk = MockDB.isEmailValid(cleanEmail, savedEmail);
-      final isPasswordOk = MockDB.isPasswordValid(cleanPassword, savedPassword);
-
-      if (isEmailOk && isPasswordOk) {
-        return {
-          'success': true,
-          'message': 'Login berhasil (Mode Mandiri/Offline)',
-          'user': {
-            'name': 'Petugas Lapangan SDA Subang',
-            'email': cleanEmail,
-            'role': cleanEmail.contains('admin') ? 'admin' : 'petugas',
-            'jabatan': 'Operator Telemetri & Pintu Air',
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
+    final response = await http
+        .post(
+          Uri.parse('$baseUrl/auth/login'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
-          'is_online': false,
-        };
-      } else {
-        return {
-          'success': false,
-          'message': 'Email atau kata sandi tidak sesuai.',
-          'is_online': false,
-        };
-      }
-    }
+          body: jsonEncode({
+            'email': email.trim(),
+            'password': password,
+          }),
+        )
+        .timeout(const Duration(seconds: 5));
+
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  /// Sinkronisasi kendali pintu air bendung ke Database Laravel
-  static Future<bool> syncGateStatus(int deviceId, bool isOpen) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(_tokenKey);
+  static Future<Map<String, dynamic>> getJson(String path) async {
+    final token = await getAccessToken();
+    final response = await http
+        .get(
+          Uri.parse('$baseUrl$path'),
+          headers: {
+            'Accept': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 5));
 
-      final headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
-      if (token != null) {
-        headers['Authorization'] = 'Bearer $token';
-      }
-
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/devices/$deviceId/toggle-gate'),
-            headers: headers,
-            body: jsonEncode({
-              'gate_is_open': isOpen,
-            }),
-          )
-          .timeout(const Duration(seconds: 3));
-
-      if (response.statusCode == 200) {
-        debugPrint('Sinkronisasi pintu air bendung ID $deviceId ke backend berhasil.');
-        return true;
-      }
-    } catch (e) {
-      debugPrint('Gagal sync pintu air ke backend: $e (status tetap tersimpan lokal).');
-    }
-    return false;
-  }
-
-  /// Ambil profil petugas yang tersimpan
-  static Future<Map<String, dynamic>?> getSavedUser() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final userStr = prefs.getString(_userKey);
-      if (userStr != null) {
-        return jsonDecode(userStr);
-      }
-    } catch (e) {
-      debugPrint('Error getSavedUser: $e');
-    }
-    return null;
-  }
-
-  /// Logout dan hapus sesi token
-  static Future<void> logout() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(_tokenKey);
-
-      if (token != null) {
-        await http
-            .post(
-              Uri.parse('$baseUrl/logout'),
-              headers: {
-                'Authorization': 'Bearer $token',
-                'Accept': 'application/json',
-              },
-            )
-            .timeout(const Duration(seconds: 2));
-      }
-
-      await prefs.remove(_tokenKey);
-      await prefs.remove(_userKey);
-    } catch (e) {
-      debugPrint('Logout backend error: $e');
-    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 }
-
